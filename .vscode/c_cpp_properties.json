@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "TMS320F28335",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/DSP2833x_common/include",
+                "${workspaceFolder}/DSP2833x_headers/include"
+            ],
+            "defines": [
+                "TARGET_IS_F28335",
+                "cregister=",
+                "__cregister=",
+                "interrupt="
+            ],
+            "cStandard": "c99",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
