@@ -1,0 +1,13 @@
+# Code Composer Studio (CCS) build outputs
+Debug/
+Release/
+*.obj
+*.out
+*.map
+*.hex
+*.d
+
+# OS / Editor temporary files
+.DS_Store
+Thumbs.db
+
