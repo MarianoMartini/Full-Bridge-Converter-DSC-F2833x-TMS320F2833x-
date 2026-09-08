@@ -80,8 +80,8 @@ void main(void)
         EPwm2Regs.CMPA.half.CMPA = duty_value;
 
         // *NOTA PARA UNIPOLAR*:
-        // Si utilizas InitEPwm_Unipolar(), recuerda que la Rama B requiere el complemento,
-        // por lo que el código aquí dentro debería ser:
+        // Si se utiliza InitEPwm_Unipolar(), la Rama B requiere el complemento
+        // Descomentar:
         // EPwm1Regs.CMPA.half.CMPA = duty_value;
         // EPwm2Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD - duty_value;
 
