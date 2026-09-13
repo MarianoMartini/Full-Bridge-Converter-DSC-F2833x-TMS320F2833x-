@@ -1,6 +1,12 @@
 #include "DSP2833x_Device.h"
 #include "DSP2833x_Examples.h"
 
+// --- SELECCIÓN CENTRALIZADA DEL MODO DE CONTROL ---
+// Cambiar este valor para alternar entre modos:
+//   0 = Control Bipolar
+//   1 = Control Unipolar
+#define CONTROL_MODE 0
+
 // Constantes para la configuración del periodo (1 kHz)
 // Asumiendo SYSCLKOUT = 150 MHz
 // CLKDIV = 1 (/2), HSPCLKDIV = 2 (/4) -> TBCLK = 150MHz / 8 = 18.75 MHz
@@ -24,9 +30,9 @@ void main(void)
     Uint16 duty_value = EPWM_TIMER_TBPRD / 2; // Inicia en 50%
     Uint16 step = 10; // Paso de incremento/decremento
     
-    // Límites del duty cycle (10% al 90%)
-    Uint16 max_duty = (Uint16)(EPWM_TIMER_TBPRD * 0.9);
-    Uint16 min_duty = (Uint16)(EPWM_TIMER_TBPRD * 0.1);
+    // Límites del duty cycle (10% al 90%) - aritmética entera
+    Uint16 max_duty = (Uint16)((EPWM_TIMER_TBPRD * 9UL) / 10);  // = 8437
+    Uint16 min_duty = (Uint16)(EPWM_TIMER_TBPRD / 10);           // = 937
 
     // 1. Inicialización de los relojes y hardware de control del sistema
     InitSysCtrl();
@@ -47,10 +53,12 @@ void main(void)
     SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 0;
     EDIS;
 
-    // --- SELECCIÓN DEL MODO DE CONTROL ---
-    // Descomentar la función deseada:
-    InitEPwm_Bipolar();
-    // InitEPwm_Unipolar();
+    // --- Inicialización según CONTROL_MODE ---
+    #if CONTROL_MODE == 0
+        InitEPwm_Bipolar();
+    #else
+        InitEPwm_Unipolar();
+    #endif
 
     // 5. Iniciar sincronizadamente los relojes de los ePWM
     EALLOW;
@@ -73,17 +81,16 @@ void main(void)
             }
         }
 
-        // Actualizar los registros CMPA (Duty Cycle)
-        
-        // Para Bipolar, ambas ramas llevan el mismo registro de comparación CMPA
-        EPwm1Regs.CMPA.half.CMPA = duty_value;
-        EPwm2Regs.CMPA.half.CMPA = duty_value;
-
-        // *NOTA PARA UNIPOLAR*:
-        // Si se utiliza InitEPwm_Unipolar(), la Rama B requiere el complemento
-        // Descomentar:
-        // EPwm1Regs.CMPA.half.CMPA = duty_value;
-        // EPwm2Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD - duty_value;
+        // Actualizar los registros CMPA (Duty Cycle) según CONTROL_MODE
+        #if CONTROL_MODE == 0
+            // Bipolar: ambas ramas llevan el mismo CMPA
+            EPwm1Regs.CMPA.half.CMPA = duty_value;
+            EPwm2Regs.CMPA.half.CMPA = duty_value;
+        #else
+            // Unipolar: Rama B lleva el complemento
+            EPwm1Regs.CMPA.half.CMPA = duty_value;
+            EPwm2Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD - duty_value;
+        #endif
 
         // Retardo simulado para que se pueda ver en el osciloscopio la modulación 
         DELAY_US(1000); 

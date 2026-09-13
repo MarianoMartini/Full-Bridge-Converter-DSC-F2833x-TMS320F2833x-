@@ -70,7 +70,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="F28335.cmd|main_old_backup.c|main.c|DSP2833x_headers/cmd/DSP2833x_Headers_BIOS.cmd|DSP2833x_common/source/DSP2833x_SWPrioritizedPieVect.c|DSP2833x_common/source/DSP2833x_SWPrioritizedDefaultIsr.c|DSP2833x_common/cmd/F28335.cmd|DSP2833x_common/cmd/F28334.cmd|DSP2833x_common/cmd/F28332.cmd|DSP2833x_common/cmd/28335_RAM_lnk.cmd|DSP2833x_common/cmd/28334_RAM_lnk.cmd|DSP2833x_common/cmd/28332_RAM_lnk.cmd" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="F28335.cmd|main_old_backup.c|main_bin.c|DSP2833x_headers/cmd/DSP2833x_Headers_BIOS.cmd|DSP2833x_common/source/DSP2833x_SWPrioritizedPieVect.c|DSP2833x_common/source/DSP2833x_SWPrioritizedDefaultIsr.c|DSP2833x_common/cmd/F28335.cmd|DSP2833x_common/cmd/F28334.cmd|DSP2833x_common/cmd/F28332.cmd|DSP2833x_common/cmd/28335_RAM_lnk.cmd|DSP2833x_common/cmd/28334_RAM_lnk.cmd|DSP2833x_common/cmd/28332_RAM_lnk.cmd" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
