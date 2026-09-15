@@ -5,7 +5,7 @@
 // Cambiar este valor para alternar entre modos:
 //   0 = Control Bipolar
 //   1 = Control Unipolar
-#define CONTROL_MODE 0
+#define CONTROL_MODE 1
 
 // Constantes para la configuración del periodo (1 kHz)
 // Asumiendo SYSCLKOUT = 150 MHz

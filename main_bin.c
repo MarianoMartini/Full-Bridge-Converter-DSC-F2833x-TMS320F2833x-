@@ -12,7 +12,7 @@
  * ============================================================================
  */
 
-#if 0  // <-- Poner en '1' solo si se desea compilar este archivo en lugar de main.c
+#if 1  // <-- Poner en '1' solo si se desea compilar este archivo en lugar de main.c
 
 #include "DSP2833x_Device.h"
 #include "DSP2833x_Examples.h"
@@ -28,7 +28,7 @@
 
 // Tiempo muerto máximo: 1023 en decimal
 // En binario (10 bits): 0b1111111111 (0x03FF)
-#define MAX_DEADBAND 0b1111111111
+#define MAX_DEADBAND 1023
 
 // Prototipos de funciones
 void InitEPwm_Bipolar(void);
@@ -172,8 +172,8 @@ void InitEPwm_Bipolar(void)
 
     // DBRED / DBFED: 10 bits de resolución
     //   0b1111111111 = 1023 cuentas (antes: MAX_DEADBAND)
-    EPwm1Regs.DBRED = 0b1111111111; 
-    EPwm1Regs.DBFED = 0b1111111111; 
+    EPwm1Regs.DBRED = MAX_DEADBAND; 
+    EPwm1Regs.DBFED = MAX_DEADBAND; 
 
     // ========================================================================
     // Configuración ePWM2 (Rama B - SLAVE)
@@ -213,8 +213,8 @@ void InitEPwm_Bipolar(void)
     EPwm2Regs.DBCTL.bit.OUT_MODE = 0b11;    // 0b11: RED y FED activos
     EPwm2Regs.DBCTL.bit.POLSEL = 0b10;      // 0b10: Active High Complementary
     EPwm2Regs.DBCTL.bit.IN_MODE = 0b00;     // 0b00: Fuente EPWMxA
-    EPwm2Regs.DBRED = 0b1111111111;         // 1023 cuentas
-    EPwm2Regs.DBFED = 0b1111111111;         // 1023 cuentas
+    EPwm2Regs.DBRED = MAX_DEADBAND;         // 1023 cuentas
+    EPwm2Regs.DBFED = MAX_DEADBAND;         // 1023 cuentas
 }
 
 /**
@@ -247,8 +247,8 @@ void InitEPwm_Unipolar(void)
     EPwm1Regs.DBCTL.bit.OUT_MODE = 0b11;    // 0b11: RED y FED activos
     EPwm1Regs.DBCTL.bit.POLSEL = 0b10;      // 0b10: Active High Complementary
     EPwm1Regs.DBCTL.bit.IN_MODE = 0b00;     // 0b00: Fuente EPWMxA
-    EPwm1Regs.DBRED = 0b1111111111;         // 1023 cuentas
-    EPwm1Regs.DBFED = 0b1111111111;         // 1023 cuentas
+    EPwm1Regs.DBRED = MAX_DEADBAND;         // 1023 cuentas
+    EPwm1Regs.DBFED = MAX_DEADBAND;         // 1023 cuentas
 
     // ========================================================================
     // Configuración ePWM2 (Rama B)
@@ -273,8 +273,8 @@ void InitEPwm_Unipolar(void)
     EPwm2Regs.DBCTL.bit.OUT_MODE = 0b11;    // 0b11: RED y FED activos
     EPwm2Regs.DBCTL.bit.POLSEL = 0b10;      // 0b10: Active High Complementary
     EPwm2Regs.DBCTL.bit.IN_MODE = 0b00;     // 0b00: Fuente EPWMxA
-    EPwm2Regs.DBRED = 0b1111111111;         // 1023 cuentas
-    EPwm2Regs.DBFED = 0b1111111111;         // 1023 cuentas
+    EPwm2Regs.DBRED = MAX_DEADBAND;         // 1023 cuentas
+    EPwm2Regs.DBFED = MAX_DEADBAND;         // 1023 cuentas
 }
 
 #endif // Fin de '#if 0'
