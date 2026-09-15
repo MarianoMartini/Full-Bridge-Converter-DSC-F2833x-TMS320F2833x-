@@ -1,17 +1,3 @@
-/**
- * ============================================================================
- * ARCHIVO DE REFERENCIA: main_valores_binarios.c
- * ============================================================================
- * Esta es una copia didáctica de 'main.c' donde todas las macros y constantes 
- * legibles (ej: TB_COUNT_UPDOWN, AQ_SET, DB_ACTV_HIC) han sido reemplazadas
- * directamente por sus valores binarios equivalentes (y decimales/hexadecimales).
- *
- * NOTA: Todo el archivo se encuentra deshabilitado mediante '#if 0' para que
- * Code Composer Studio (CCS) no intente compilarlo como un segundo 'main()',
- * evitando así errores de duplicación de símbolos en el proyecto.
- * ============================================================================
- */
-
 #if 1  // <-- Poner en '1' solo si se desea compilar este archivo en lugar de main.c
 
 #include "DSP2833x_Device.h"
@@ -22,13 +8,16 @@
 //   0b1 = Control Unipolar
 #define CONTROL_MODE 0b0
 
-// Periodo del temporizador para 1 kHz: 9375 en decimal
-// En binario (14 bits): 0b10010010011111 (0x249F)
-#define EPWM_TIMER_TBPRD 9375
+// Periodo del temporizador para 1 kHz: 37500 en decimal
+// En binario (16 bits): 0b1001001001111100 (0x927C)
+#define EPWM_TIMER_TBPRD 37500
 
 // Tiempo muerto máximo: 1023 en decimal
 // En binario (10 bits): 0b1111111111 (0x03FF)
 #define MAX_DEADBAND 1023
+
+// Ciclo de trabajo fijo en estado estacionario (50% = 18750 cuentas)
+#define STEADY_DUTY (EPWM_TIMER_TBPRD / 2)
 
 // Prototipos de funciones
 void InitEPwm_Bipolar(void);
@@ -39,15 +28,6 @@ void InitEPwm_Unipolar(void);
  */
 void main(void)
 {
-    // Variables para el bucle infinito
-    Uint16 duty_direction = 0b1;               // 0b1 = subiendo, 0b0 = bajando
-    Uint16 duty_value = EPWM_TIMER_TBPRD / 2;  // Inicia en 50% (4687)
-    Uint16 step = 10;                          // Paso de incremento/decremento
-    
-    // Límites del duty cycle (10% al 90%) - aritmética entera
-    Uint16 max_duty = (Uint16)((EPWM_TIMER_TBPRD * 9UL) / 10);  // = 8437
-    Uint16 min_duty = (Uint16)(EPWM_TIMER_TBPRD / 10);           // = 937
-
     // 1. Inicialización de los relojes y hardware de control del sistema
     InitSysCtrl();
 
@@ -65,51 +45,31 @@ void main(void)
     // 4. Detener el reloj base de los ePWM antes de configurarlos
     //    bit TBCLKSYNC = 0b0 (detener sincronización)
     EALLOW;
-    SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 0b0;
+    SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 0;
     EDIS;
 
     // --- Inicialización según CONTROL_MODE ---
-    #if CONTROL_MODE == 0b0
+    #if CONTROL_MODE == 0
         InitEPwm_Bipolar();
     #else
         InitEPwm_Unipolar();
     #endif
 
-    // 5. Iniciar sincronizadamente los relojes de los ePWM
+    // --- 5. Inicializar ePWM según CONTROL_MODE ---                               
+        #if CONTROL_MODE == 0                                                           
+            InitEPwm_Bipolar();                                                         
+        #else                                                                           
+            InitEPwm_Unipolar();                                                        
+        #endif  
+
+    // 6. Iniciar sincronizadamente los relojes de los ePWM
     //    bit TBCLKSYNC = 0b1 (iniciar sincronización)
     EALLOW;
     SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 0b1;
     EDIS;
 
-    // 6. Bucle Infinito: Variación continua del Ciclo de Trabajo
-    for(;;)
-    {
-        // Alternar dirección al llegar a los límites
-        if(duty_direction == 0b1) {
-            duty_value += step;
-            if(duty_value >= max_duty) {
-                duty_direction = 0b0;
-            }
-        } else {
-            duty_value -= step;
-            if(duty_value <= min_duty) {
-                duty_direction = 0b1;
-            }
-        }
-
-        // Actualizar los registros CMPA según el modo de control
-        #if CONTROL_MODE == 0b0
-            // Bipolar: ambas ramas llevan el mismo CMPA
-            EPwm1Regs.CMPA.half.CMPA = duty_value;
-            EPwm2Regs.CMPA.half.CMPA = duty_value;
-        #else
-            // Unipolar: Rama B lleva el complemento
-            EPwm1Regs.CMPA.half.CMPA = duty_value;
-            EPwm2Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD - duty_value;
-        #endif
-
-        // Retardo para visualización en osciloscopio
-        DELAY_US(1000); 
+    // 7. Bucle infinito
+    for(;;){
     }
 }
 
@@ -140,15 +100,14 @@ void InitEPwm_Bipolar(void)
     EPwm1Regs.TBCTL.bit.CTRMODE = 0b10;
 
     // TBCTL.HSPCLKDIV (bits 9-7): 
-    //   0b010 = Preescalador /4 (TBCLK = 150 MHz / 8 = 18.75 MHz)
-    EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0b010;            
+    //   0b001 = Preescalador /2 (valor por defecto de reset) -> TBCLK = 150 MHz / 2 = 75 MHz
+    // EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0b001;            
 
     // TBCTL.CLKDIV (bits 12-10): 
-    //   0b001 = Preescalador /2
-    EPwm1Regs.TBCTL.bit.CLKDIV = 0b001;               
+    //   0b000 = Preescalador /1 (valor por defecto de reset)
+    // EPwm1Regs.TBCTL.bit.CLKDIV = 0b000;               
 
-    // CMPA inicial: 50% del periodo
-    EPwm1Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD / 2; 
+    EPwm1Regs.CMPA.half.CMPA = STEADY_DUTY; 
 
     // AQCTLA.CAU (bits 5-4): 
     //   0b10 = Salida en ALTO (SET) al comparar en subida (antes: AQ_SET)
@@ -171,7 +130,6 @@ void InitEPwm_Bipolar(void)
     EPwm1Regs.DBCTL.bit.IN_MODE = 0b00;
 
     // DBRED / DBFED: 10 bits de resolución
-    //   0b1111111111 = 1023 cuentas (antes: MAX_DEADBAND)
     EPwm1Regs.DBRED = MAX_DEADBAND; 
     EPwm1Regs.DBFED = MAX_DEADBAND; 
 
@@ -195,10 +153,10 @@ void InitEPwm_Bipolar(void)
     EPwm2Regs.TBCTL.bit.CTRMODE = 0b10;
 
     // TBCTL preescaladores idénticos a ePWM1
-    EPwm2Regs.TBCTL.bit.HSPCLKDIV = 0b010;  // Preescalador /4
-    EPwm2Regs.TBCTL.bit.CLKDIV = 0b001;     // Preescalador /2
+    // EPwm2Regs.TBCTL.bit.HSPCLKDIV = 0b001;  // Preescalador /2 (por defecto)
+    // EPwm2Regs.TBCTL.bit.CLKDIV = 0b000;     // Preescalador /1 (por defecto)
 
-    EPwm2Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD / 2; 
+    EPwm2Regs.CMPA.half.CMPA = STEADY_DUTY; 
 
     // Acciones OPUESTAS a ePWM1 para puente completo bipolar:
     // AQCTLA.CAU (bits 5-4): 
@@ -219,8 +177,6 @@ void InitEPwm_Bipolar(void)
 
 /**
  * @brief Configuración ePWM para Convertidor DC-DC (Control Unipolar a 1kHz)
- * 
- * En esta función se han reemplazado todas las constantes por su valor BINARIO exacto:
  */
 void InitEPwm_Unipolar(void)
 {
@@ -236,10 +192,10 @@ void InitEPwm_Unipolar(void)
     EPwm1Regs.TBCTL.bit.SYNCOSEL = 0b01;    // 0b01: Sincronizar en CTR == 0
     EPwm1Regs.TBCTL.bit.PHSEN = 0b0;        // 0b0: Deshabilitar carga de fase
     EPwm1Regs.TBCTL.bit.CTRMODE = 0b10;     // 0b10: Up-Down
-    EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0b010;  // 0b010: Preescalador /4
-    EPwm1Regs.TBCTL.bit.CLKDIV = 0b001;     // 0b001: Preescalador /2
+    EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0b001;  // 0b001: Preescalador /2 (por defecto)
+    EPwm1Regs.TBCTL.bit.CLKDIV = 0b000;     // 0b000: Preescalador /1 (por defecto)
 
-    EPwm1Regs.CMPA.half.CMPA = duty_cmp; 
+    EPwm1Regs.CMPA.half.CMPA = STEADY_DUTY; 
 
     EPwm1Regs.AQCTLA.bit.CAU = 0b10;        // 0b10: Salida en ALTO en subida
     EPwm1Regs.AQCTLA.bit.CAD = 0b01;        // 0b01: Salida en BAJO en bajada
@@ -260,11 +216,11 @@ void InitEPwm_Unipolar(void)
     EPwm2Regs.TBCTL.bit.PHSEN = 0b1;        // 0b1: Habilitar fase
     EPwm2Regs.TBCTL.bit.SYNCOSEL = 0b00;    // 0b00: Pasar sync
     EPwm2Regs.TBCTL.bit.CTRMODE = 0b10;     // 0b10: Up-Down
-    EPwm2Regs.TBCTL.bit.HSPCLKDIV = 0b010;  // 0b010: Preescalador /4
-    EPwm2Regs.TBCTL.bit.CLKDIV = 0b001;     // 0b001: Preescalador /2
+    EPwm2Regs.TBCTL.bit.HSPCLKDIV = 0b001;  // 0b001: Preescalador /2 (por defecto)
+    EPwm2Regs.TBCTL.bit.CLKDIV = 0b000;     // 0b000: Preescalador /1 (por defecto)
 
     // En Unipolar, la rama B lleva el ciclo de trabajo complementario
-    EPwm2Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD - duty_cmp; 
+    EPwm2Regs.CMPA.half.CMPA = EPWM_TIMER_TBPRD - STEADY_DUTY; 
 
     // En Unipolar, las acciones del Action-Qualifier son IDÉNTICAS a Rama A:
     EPwm2Regs.AQCTLA.bit.CAU = 0b10;        // 0b10: Salida en ALTO en subida
@@ -277,4 +233,4 @@ void InitEPwm_Unipolar(void)
     EPwm2Regs.DBFED = MAX_DEADBAND;         // 1023 cuentas
 }
 
-#endif // Fin de '#if 0'
+#endif
